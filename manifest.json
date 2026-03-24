@@ -1,0 +1,17 @@
+{
+  "short_name": "Shatterpoint",
+  "name": "Shatterpoint: Neural Reset",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzBmMTcyYSIvPjxwYXRoIGQ9Ik0yNTYgMTI4IEwxMjggMzg0IEwzODQgMzg0IFoiIGZpbGw9IiMyZGQ0YmYiLz48L3N2Zz4=",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#2dd4bf"
+}
