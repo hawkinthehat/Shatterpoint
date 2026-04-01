@@ -70,16 +70,63 @@
         let audioStarted = false, masterVol = 0.5;
 
         let savedData = JSON.parse(localStorage.getItem('shatterpoint_v6')) || { level: 1, totalShattered: 0 };
+        const SPIRIT_THEMES = [
+            { freq: 96 },
+            { freq: 110 },
+            { freq: 132 },
+            { freq: 147 }
+        ];
 
-        let audioCtx, resOsc, resGain, panner;
+        let audioCtx, resOsc, resGain, panner, drumIntervalId;
+        
+        function getCurrentTheme() {
+            return SPIRIT_THEMES[Math.floor((savedData.level - 1) / 5) % SPIRIT_THEMES.length];
+        }
         
         function initAudio() {
             if (audioStarted) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            resOsc = audioCtx.createOscillator(); resGain = audioCtx.createGain(); panner = audioCtx.createStereoPanner();
-            resOsc.type = 'sine'; resOsc.frequency.value = 110; resGain.gain.value = 0;
-            resOsc.connect(resGain); resGain.connect(panner); panner.connect(audioCtx.destination);
-            resOsc.start(); audioStarted = true;
+            panner = audioCtx.createStereoPanner();
+            panner.connect(audioCtx.destination);
+
+            resOsc = audioCtx.createOscillator();
+            resGain = audioCtx.createGain();
+            const theme = getCurrentTheme();
+
+            resOsc.type = 'sine';
+            resOsc.frequency.setValueAtTime(theme.freq, audioCtx.currentTime);
+            resGain.gain.value = 0;
+            
+            resOsc.connect(resGain).connect(panner);
+            resOsc.start();
+            audioStarted = true;
+            startDrum();
+        }
+
+        function playDrum() {
+            if (!audioCtx || !panner) return;
+
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            const theme = getCurrentTheme();
+            
+            osc.frequency.setValueAtTime(theme.freq * 0.8, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            
+            g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            
+            osc.connect(g).connect(panner);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        function startDrum() {
+            if (drumIntervalId) return;
+            drumIntervalId = setInterval(() => {
+                if (!audioStarted || isPaused || !audioCtx || audioCtx.state !== 'running') return;
+                playDrum();
+            }, 460);
         }
 
         function startApp() {
@@ -171,7 +218,7 @@
                 if (tapCount === 2) { 
                     isEMDR = !isEMDR; 
                     document.getElementById('mode-label').style.opacity = isEMDR ? '0.8' : '0';
-                    if (!isEMDR) panner.pan.value = 0; 
+                    if (!isEMDR && panner) panner.pan.value = 0; 
                 }
             } else { tapCount = 0; }
             lastTap = now;
@@ -190,6 +237,10 @@
                         updateHUD();
                         localStorage.setItem('shatterpoint_v6', JSON.stringify(savedData));
                         fragments.forEach(f => { f.isSnapping = false; f.sides = Math.floor(savedData.level / 3) + 3; });
+                        if (audioStarted && audioCtx && resOsc) {
+                            const theme = getCurrentTheme();
+                            resOsc.frequency.setTargetAtTime(theme.freq, audioCtx.currentTime, 0.25);
+                        }
                     }
                 }
             });
@@ -198,8 +249,17 @@
         function animate() {
             if (!isPaused) {
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.28)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                if (isEMDR) { emdrSweep += 0.018; panner.pan.setTargetAtTime(Math.sin(emdrSweep), audioCtx.currentTime, 0.1); }
-                const centerX = isEMDR ? (canvas.width/2) + Math.sin(emdrSweep) * (canvas.width * 0.35) : canvas.width/2;
+                let centerX = canvas.width / 2;
+                if (isEMDR) {
+                    emdrSweep += 0.04;
+                    centerX = canvas.width / 2 + Math.sin(emdrSweep) * (canvas.width * 0.4);
+                    if (panner && audioCtx) {
+                        const panValue = (centerX / canvas.width) * 2 - 1;
+                        panner.pan.setTargetAtTime(panValue, audioCtx.currentTime, 0.1);
+                    }
+                } else if (panner && audioCtx) {
+                    panner.pan.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                }
                 const norm = calmScore / 100;
                 pulseValue += 0.045 - (norm * 0.02);
                 const hue = 280 - (norm * 110);
