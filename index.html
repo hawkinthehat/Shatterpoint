@@ -122,7 +122,7 @@
         function initAudio() {
             if (audioStarted) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            panner = audioCtx.createStereoPanner();
+            panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : audioCtx.createGain();
             
             // Cedar Hum
             const cedar = audioCtx.createOscillator();
@@ -132,19 +132,21 @@
             cedar.start();
 
             // Rain Synth
-            const bufferSize = 4096;
-            const pinkNoise = audioCtx.createScriptProcessor(bufferSize, 1, 1);
-            let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
-            pinkNoise.onaudioprocess = (e) => {
-                const out = e.outputBuffer.getChannelData(0);
-                for (let i=0; i<bufferSize; i++) {
-                    const w = Math.random()*2-1;
-                    b0 = 0.99886*b0+w*0.0555179; b1 = 0.99332*b1+w*0.0750759; b2 = 0.969*b2+w*0.153852;
-                    out[i] = (b0+b1+b2)*0.12;
-                }
-            };
-            rainGain = audioCtx.createGain(); rainGain.gain.value = 0.2;
-            pinkNoise.connect(rainGain).connect(panner);
+            if (audioCtx.createScriptProcessor) {
+                const bufferSize = 4096;
+                const pinkNoise = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+                let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
+                pinkNoise.onaudioprocess = (e) => {
+                    const out = e.outputBuffer.getChannelData(0);
+                    for (let i=0; i<bufferSize; i++) {
+                        const w = Math.random()*2-1;
+                        b0 = 0.99886*b0+w*0.0555179; b1 = 0.99332*b1+w*0.0750759; b2 = 0.969*b2+w*0.153852;
+                        out[i] = (b0+b1+b2)*0.12;
+                    }
+                };
+                rainGain = audioCtx.createGain(); rainGain.gain.value = 0.2;
+                pinkNoise.connect(rainGain).connect(panner);
+            }
             panner.connect(audioCtx.destination);
             audioStarted = true;
         }
@@ -220,7 +222,7 @@
                     emdrAngle += speedMult;
                     this.x = canvas.width/2 + Math.sin(emdrAngle)*(canvas.width*0.4);
                     this.y = canvas.height/2;
-                    if (panner && audioCtx) {
+                    if (panner && panner.pan && audioCtx) {
                         const panValue = (this.x / canvas.width) * 2 - 1;
                         panner.pan.setTargetAtTime(panValue, audioCtx.currentTime, 0.1);
                     }
@@ -271,8 +273,13 @@
 
         // --- Controls & Lifecycle ---
         function startApp() {
-            initAudio();
-            startDrum();
+            try {
+                initAudio();
+                startDrum();
+            } catch (err) {
+                // Keep the visual experience usable even if audio APIs are unavailable.
+                console.warn('Audio initialization failed:', err);
+            }
             document.getElementById('intro-overlay').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('intro-overlay').style.display = 'none';
