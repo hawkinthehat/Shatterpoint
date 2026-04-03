@@ -7,13 +7,20 @@
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --gold: #fbbf24; }
+        :root { --gold: #fbbf24; --teal: #2dd4bf; }
         body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: ui-sans-serif, system-ui; color: white; }
         canvas { display: block; }
         .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(45, 212, 191, 0.15); }
         .ui-element { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
         .animate-glow { animation: pulse-soft 3s infinite; }
+        .btn { border: 0; border-radius: 9999px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: transform 0.2s ease; }
+        .btn:active { transform: scale(0.97); }
+        .gold-btn { background: var(--gold); color: #111827; padding: 12px 22px; }
+        .secondary { background: rgba(30, 41, 59, 0.8); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.35); padding: 10px 18px; }
+        .screen { position: fixed; inset: 0; z-index: 45; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; background: rgba(2, 6, 23, 0.9); }
+        .screen.active { display: flex; }
+        #weave-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
     </style>
 </head>
 <body>
@@ -68,6 +75,23 @@
                 class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
             >
         </div>
+        <button class="btn gold-btn" onclick="show('weave')">THE WEAVE (MEDITATION)</button>
+    </div>
+
+    <div id="weave" class="screen">
+        <canvas id="weave-canvas"></canvas>
+        <div style="position: absolute; top: 100px; width: 100%; pointer-events: none;">
+            <h2 style="color: var(--gold); letter-spacing: 5px;">NEURAL WEAVER</h2>
+            <p id="weave-progress" style="opacity: 0.6; font-size: 0.8rem;">0% WOVEN</p>
+        </div>
+        <button class="btn secondary" style="position: absolute; bottom: 40px;" onclick="exitAll()">FINISH WEAVE</button>
+    </div>
+
+    <div id="success" class="screen">
+        <h1 style="color: var(--teal);">SXT'EKW REACHED</h1>
+        <p id="success-quote"></p>
+        <button class="btn gold-btn" onclick="show('weave')">WEAVE THE QUIET (COOL DOWN)</button>
+        <button class="btn secondary" onclick="show('home')">RETURN TO HOME</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -84,12 +108,22 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let fragments = [], glitches = [], stars = [], totemPoints = [], weaveGrid = [];
+        let fragments = [], glitches = [], stars = [], totemPoints = [];
         let isPaused = true, mode = 0; // 0: Std, 1: EMDR, 2: Saccadic, 3: Zen
         let centralPulse = 1.0, timeLeft = 120, lastJump = 0, emdrAngle = 0;
         let speedMult = 0.04, drumInt = null;
-        const GRID_SIZE = 8;
         const mouse = { x: null, y: null };
+        const wCanvas = document.getElementById('weave-canvas');
+        const wCtx = wCanvas.getContext('2d');
+        const weaveProgressDisplay = document.getElementById('weave-progress');
+        const successQuote = document.getElementById('success-quote');
+        const WEAVE_COLS = 8, WEAVE_ROWS = 10;
+        let weavePoints = [], weaveProgress = 0, weaveAnimating = false, appStarted = false;
+        const successQuotes = [
+            "The pattern remembers your breath.",
+            "Quiet held, quiet returned.",
+            "Your hands rewove the signal."
+        ];
         let audioCtx, panner, rainGain, cedarGain, audioStarted = false;
 
         const slider = document.getElementById('speed-slider');
@@ -119,59 +153,85 @@
         }
         generateTotem();
 
-        function initWeaveGrid() {
-            weaveGrid = [];
-            for (let row = 0; row < GRID_SIZE; row++) {
-                for (let col = 0; col < GRID_SIZE; col++) {
-                    weaveGrid.push({
-                        row,
-                        col,
-                        x: (canvas.width / (GRID_SIZE + 1)) * (col + 1),
-                        y: (canvas.height / (GRID_SIZE + 1)) * (row + 1),
+        function initWeave() {
+            weavePoints = [];
+            const w = window.innerWidth, h = window.innerHeight;
+            wCanvas.width = w;
+            wCanvas.height = h;
+            for (let i = 0; i < WEAVE_COLS; i++) {
+                for (let j = 0; j < WEAVE_ROWS; j++) {
+                    weavePoints.push({
+                        x: (w / (WEAVE_COLS + 1)) * (i + 1),
+                        y: (h / (WEAVE_ROWS + 1)) * (j + 1),
                         locked: false
                     });
                 }
             }
+            weaveProgress = 0;
+            weaveProgressDisplay.innerText = "0% WOVEN";
         }
-        initWeaveGrid();
 
-        function drawWeave() {
+        function renderWeave() {
+            if (!document.getElementById('weave').classList.contains('active')) {
+                weaveAnimating = false;
+                return;
+            }
+
+            weaveAnimating = true;
+            if (wCanvas.width !== window.innerWidth || wCanvas.height !== window.innerHeight) {
+                wCanvas.width = window.innerWidth;
+                wCanvas.height = window.innerHeight;
+            }
+
+            wCtx.clearRect(0, 0, wCanvas.width, wCanvas.height);
+            let lockedCount = 0;
             const hasPointer = mouse.x !== null && mouse.y !== null;
-            const goldStep = Math.max(canvas.width, canvas.height) / GRID_SIZE + 10;
 
-            weaveGrid.forEach((point) => {
-                if (hasPointer && !point.locked) {
-                    const d = Math.sqrt((mouse.x - point.x) ** 2 + (mouse.y - point.y) ** 2);
-                    if (d < 40) point.locked = true;
+            for (let i = 0; i < weavePoints.length; i++) {
+                const p = weavePoints[i];
+                if (hasPointer && !p.locked) {
+                    const d = Math.sqrt((mouse.x - p.x) ** 2 + (mouse.y - p.y) ** 2);
+                    if (d < 35) {
+                        p.locked = true;
+                        if ("vibrate" in navigator) navigator.vibrate(15);
+                    }
                 }
 
-                if (!point.locked) return;
-                ctx.fillStyle = "var(--gold)";
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
+                if (p.locked) {
+                    lockedCount++;
+                    wCtx.fillStyle = "var(--gold)";
+                    wCtx.beginPath();
+                    wCtx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    wCtx.fill();
 
-            ctx.strokeStyle = "rgba(251, 191, 36, 0.4)";
-            ctx.setLineDash([5, 5]);
-            ctx.lineWidth = 1;
-            weaveGrid.forEach((point) => {
-                if (!point.locked) return;
-                const right = weaveGrid.find((p2) => p2.row === point.row && p2.col === point.col + 1);
-                const down = weaveGrid.find((p2) => p2.row === point.row + 1 && p2.col === point.col);
-
-                [right, down].forEach((p2) => {
-                    if (!p2 || !p2.locked) return;
-                    const d2 = Math.sqrt((p2.x - point.x) ** 2 + (p2.y - point.y) ** 2);
-                    if (d2 < goldStep) {
-                        ctx.beginPath();
-                        ctx.moveTo(point.x, point.y);
-                        ctx.lineTo(p2.x, p2.y);
-                        ctx.stroke();
+                    for (let k = i + 1; k < weavePoints.length; k++) {
+                        const p2 = weavePoints[k];
+                        if (!p2.locked) continue;
+                        const d2 = Math.sqrt((p2.x - p.x) ** 2 + (p2.y - p.y) ** 2);
+                        if (d2 < (wCanvas.width / WEAVE_COLS) + 20) {
+                            wCtx.strokeStyle = "rgba(251, 191, 36, 0.3)";
+                            wCtx.lineWidth = 1;
+                            wCtx.beginPath();
+                            wCtx.moveTo(p.x, p.y);
+                            wCtx.lineTo(p2.x, p2.y);
+                            wCtx.stroke();
+                        }
                     }
-                });
-            });
-            ctx.setLineDash([]);
+                } else {
+                    wCtx.fillStyle = "rgba(255,255,255,0.05)";
+                    wCtx.beginPath();
+                    wCtx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                    wCtx.fill();
+                }
+            }
+
+            weaveProgress = Math.round((lockedCount / weavePoints.length) * 100);
+            weaveProgressDisplay.innerText = `${weaveProgress}% WOVEN`;
+            if (weaveProgress >= 100) {
+                show('success');
+                return;
+            }
+            requestAnimationFrame(renderWeave);
         }
 
         // --- Audio Engine (PNW Rain & Cedar) ---
@@ -321,20 +381,61 @@
                     if(glitches.length < 1) glitches.push(new Glitch());
                     glitches.forEach(g => { g.update(); g.draw(); });
                 }
-                drawWeave();
             }
             requestAnimationFrame(animate);
         }
 
         // --- Controls & Lifecycle ---
+        function setMainPanelsVisible(visible) {
+            document.getElementById('hud').style.opacity = visible ? '0.5' : '0';
+            document.getElementById('controls').style.opacity = visible ? '1' : '0';
+            document.getElementById('controls').style.pointerEvents = visible ? 'auto' : 'none';
+        }
+
+        function show(screen) {
+            const weaveScreen = document.getElementById('weave');
+            const successScreen = document.getElementById('success');
+            weaveScreen.classList.remove('active');
+            successScreen.classList.remove('active');
+
+            if (screen === 'weave') {
+                setMainPanelsVisible(false);
+                isPaused = true;
+                clearPointer();
+                initWeave();
+                weaveScreen.classList.add('active');
+                if (!weaveAnimating) requestAnimationFrame(renderWeave);
+                return;
+            }
+
+            if (screen === 'success') {
+                setMainPanelsVisible(false);
+                isPaused = true;
+                successQuote.innerText = successQuotes[Math.floor(Math.random() * successQuotes.length)];
+                successScreen.classList.add('active');
+                return;
+            }
+
+            setMainPanelsVisible(appStarted);
+            if (appStarted) isPaused = false;
+        }
+
+        function exitAll() {
+            if (weaveProgress >= 100) {
+                show('success');
+            } else {
+                show('home');
+            }
+        }
+
         function startApp() {
             initAudio();
             startDrum();
             document.getElementById('intro-overlay').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('intro-overlay').style.display = 'none';
-                document.getElementById('hud').style.opacity = '0.5';
-                document.getElementById('controls').style.opacity = '1';
+                appStarted = true;
+                setMainPanelsVisible(true);
                 isPaused = false;
             }, 600);
             setInterval(() => { if(!isPaused && timeLeft>0) timeLeft--; updateHUD(); }, 1000);
@@ -388,7 +489,7 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             generateTotem();
-            initWeaveGrid();
+            if (document.getElementById('weave').classList.contains('active')) initWeave();
         });
         window.addEventListener('mousemove', trackPointer);
         window.addEventListener('mouseleave', clearPointer);
