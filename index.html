@@ -28,29 +28,29 @@
 
             <div class="grid grid-cols-2 gap-4 w-full mb-8">
                 <div class="glass rounded-3xl p-5">
-                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Rank</p>
+                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Path Level</p>
                     <p id="dash-level" class="text-teal-400 font-black text-3xl italic">LVL 1</p>
                 </div>
                 <div class="glass rounded-3xl p-5">
-                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Shattered</p>
+                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Cleared</p>
                     <p id="dash-total" class="text-white font-black text-3xl italic">0</p>
                 </div>
             </div>
 
             <button onclick="startApp()" class="w-full py-7 bg-teal-500 text-slate-950 font-black rounded-3xl active:scale-95 transition-all uppercase tracking-[0.3em] text-sm shadow-2xl shadow-teal-500/40">
-                Initialize Reset
+                Begin Path
             </button>
         </div>
     </div>
 
     <div id="hud" class="ui-element opacity-0 absolute top-12 w-full flex justify-between px-10 z-20 pointer-events-none">
         <div id="timer-display" class="text-teal-400 font-mono text-4xl tracking-tighter">02:00</div>
-        <div id="active-level" class="text-white font-black italic tracking-widest text-xl uppercase">Rank 1</div>
+        <div id="active-level" class="text-white font-black italic tracking-widest text-xl uppercase">Path 1</div>
     </div>
 
     <div id="controls" class="ui-element opacity-0 absolute bottom-12 w-full flex flex-col items-center gap-4 z-20">
         <button onclick="cycleMode()" id="mode-btn" class="glass px-12 py-5 text-teal-400 rounded-full text-[11px] font-bold uppercase tracking-[0.4em] active:bg-teal-500/20 shadow-xl">
-            Mode: STANDARD
+            Path: STANDARD
         </button>
         <div id="sensitivity-container" class="mt-2 w-64 mx-auto flex flex-col gap-2">
             <div class="flex justify-between text-[8px] uppercase tracking-widest text-slate-500 font-bold">
@@ -291,7 +291,7 @@
         function cycleMode() {
             mode = (mode + 1) % 4;
             const btn = document.getElementById('mode-btn');
-            const labels = ["Mode: STANDARD", "Mode: EMDR (Calm)", "Mode: SACCADIC (Focus)", "Mode: ZEN"];
+            const labels = ["Path: STANDARD", "Path: EMDR (Calm)", "Path: SACCADIC (Focus)", "Path: ZEN"];
             btn.innerText = labels[mode];
             btn.style.color = mode === 2 ? "#f43f5e" : (mode === 3 ? "#a855f7" : "#2dd4bf");
             glitches = [];
@@ -308,7 +308,7 @@
                     for(let j=0; j<25; j++) fragments.push(new Fragment(g.x, g.y));
                     if(stats.total%20===0) stats.level++;
                     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-                    document.getElementById('active-level').innerText = `Rank ${stats.level}`;
+                    document.getElementById('active-level').innerText = `Path ${stats.level}`;
                 }
             });
         }
