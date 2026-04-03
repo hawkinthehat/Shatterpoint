@@ -14,7 +14,10 @@
         input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #2dd4bf; cursor: pointer; border: 2px solid #0f172a; }
         @keyframes pulse-slow { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } }
+        @keyframes pulse-tip-icon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         .animate-neuro { animation: pulse-slow 4s infinite ease-in-out; }
+        .tip-icon { transition: transform 0.2s ease; }
+        .group:hover .tip-icon { animation: pulse-tip-icon 0.9s ease-in-out infinite; }
     </style>
 </head>
 <body>
@@ -44,7 +47,7 @@
                 
                 <div class="flex flex-col gap-4">
                     <div class="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group">
-                        <div class="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 font-bold text-xs shrink-0">🎧</div>
+                        <div class="tip-icon w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 font-bold text-xs shrink-0">🎧</div>
                         <div>
                             <p class="text-white text-[11px] font-bold uppercase tracking-wider mb-1">Bilateral Sync</p>
                             <p class="text-slate-500 text-[10px] leading-relaxed">Always use headphones. The panning drum synchronizes brain hemispheres to break logic loops.</p>
@@ -52,7 +55,7 @@
                     </div>
 
                     <div class="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group">
-                        <div class="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-400 font-bold text-xs shrink-0">👁️</div>
+                        <div class="tip-icon w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-400 font-bold text-xs shrink-0">👁️</div>
                         <div>
                             <p class="text-white text-[11px] font-bold uppercase tracking-wider mb-1">Saccadic Overclock</p>
                             <p class="text-slate-500 text-[10px] leading-relaxed">Use Red mode for sharp jumps. This triggers Dopamine and high-speed problem solving.</p>
@@ -60,7 +63,7 @@
                     </div>
 
                     <div class="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group">
-                        <div class="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 font-bold text-xs shrink-0">🧠</div>
+                        <div class="tip-icon w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 font-bold text-xs shrink-0">🧠</div>
                         <div>
                             <p class="text-white text-[11px] font-bold uppercase tracking-wider mb-1">Plasticity Save</p>
                             <p class="text-slate-500 text-[10px] leading-relaxed">Complete the 2-minute gate. The Prolactin shift after the session 'locks in' your mental progress.</p>
