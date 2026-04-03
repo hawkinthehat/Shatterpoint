@@ -7,6 +7,7 @@
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        :root { --teal: #2dd4bf; }
         body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: ui-sans-serif, system-ui; color: white; }
         canvas { display: block; }
         .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(45, 212, 191, 0.15); }
@@ -52,6 +53,9 @@
         <button onclick="cycleMode()" id="mode-btn" class="glass px-12 py-5 text-teal-400 rounded-full text-[11px] font-bold uppercase tracking-[0.4em] active:bg-teal-500/20 shadow-xl">
             Mode: STANDARD
         </button>
+        <button onclick="openVantage()" class="glass px-10 py-3 text-teal-300 rounded-full text-[10px] font-bold uppercase tracking-[0.35em] active:bg-teal-500/20">
+            The Vantage
+        </button>
         <div id="sensitivity-container" class="mt-2 w-64 mx-auto flex flex-col gap-2">
             <div class="flex justify-between text-[8px] uppercase tracking-widest text-slate-500 font-bold">
                 <span>Slow / Deep</span>
@@ -71,6 +75,25 @@
 
     <canvas id="gameCanvas"></canvas>
 
+    <div id="visual-msg" class="hidden absolute inset-0 z-20 flex items-center justify-center pointer-events-none text-center px-4">
+        <div class="text-teal-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-bold"></div>
+    </div>
+
+    <div id="vantage" class="hidden absolute inset-0 z-30 bg-slate-950/80 flex-col items-center justify-center p-6 text-center">
+        <h2 style="color: var(--teal); letter-spacing: 4px;" class="text-teal-300 font-black text-2xl mb-4">THE VANTAGE</h2>
+        <p style="opacity: 0.6; font-size: 0.8rem; max-width: 280px;" class="text-slate-300 mb-3">
+            Label the thought. See it as a mental event, not a fact.
+        </p>
+
+        <input type="text" id="thought-input" placeholder="One word for the worry..."
+               style="background: rgba(255,255,255,0.05); border: 1px solid #2dd4bf; color: white; padding: 15px; border-radius: 10px; width: min(80%, 340px); text-align: center; margin: 20px 0;">
+
+        <div class="flex gap-3 mt-2">
+            <button class="glass px-6 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.25em] text-teal-300" onclick="startVantage()">OBSERVE THOUGHT</button>
+            <button class="glass px-6 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.25em] text-slate-200" onclick="exitAll()">CANCEL</button>
+        </div>
+    </div>
+
     <script>
         // --- Persistence ---
         let stats = JSON.parse(localStorage.getItem('shatterpoint_stats')) || { level: 1, total: 0 };
@@ -87,6 +110,7 @@
         let isPaused = true, mode = 0; // 0: Std, 1: EMDR, 2: Saccadic, 3: Zen
         let centralPulse = 1.0, timeLeft = 120, lastJump = 0, emdrAngle = 0;
         let speedMult = 0.04, drumInt = null;
+        let vantageMode = false;
         let audioCtx, panner, rainGain, cedarGain, audioStarted = false;
 
         const slider = document.getElementById('speed-slider');
@@ -244,6 +268,16 @@
             if(!isPaused) {
                 // Background Stars
                 stars.forEach(s => {
+                    if (vantageMode) {
+                        const dx = -s.x;
+                        const dy = -s.y;
+                        const dist = Math.hypot(dx, dy);
+                        if (dist < 150) {
+                            const f = (150 - dist) / 150;
+                            s.x -= dx * f * 0.2;
+                            s.y -= dy * f * 0.2;
+                        }
+                    }
                     let speed = mode === 2 ? 4 : (mode === 3 ? 0.4 : 1.2);
                     s.z -= speed; if(s.z<=0) s.z=canvas.width;
                     const sx = (s.x*(canvas.width/s.z))+canvas.width/2;
@@ -293,6 +327,40 @@
             btn.innerText = labels[mode];
             btn.style.color = mode === 2 ? "#f43f5e" : (mode === 3 ? "#a855f7" : "#2dd4bf");
             glitches = [];
+        }
+
+        function show(screenName) {
+            if (screenName === 'visual') {
+                isPaused = false;
+            }
+        }
+
+        function openVantage() {
+            const panel = document.getElementById('vantage');
+            panel.classList.remove('hidden');
+            panel.classList.add('flex');
+            document.getElementById('thought-input').focus();
+        }
+
+        function startVantage() {
+            const thought = document.getElementById('thought-input').value || "Thought";
+            show('visual'); // Reuse the active visual canvas.
+            const visualWrap = document.getElementById('visual-msg');
+            visualWrap.classList.remove('hidden');
+            visualWrap.querySelector('div').innerText = `OBSERVE: ${thought.toUpperCase()}`;
+            vantageMode = true;
+            document.getElementById('vantage').classList.add('hidden');
+            document.getElementById('vantage').classList.remove('flex');
+        }
+
+        function exitAll() {
+            vantageMode = false;
+            const visualWrap = document.getElementById('visual-msg');
+            visualWrap.classList.add('hidden');
+            visualWrap.querySelector('div').innerText = '';
+            document.getElementById('vantage').classList.add('hidden');
+            document.getElementById('vantage').classList.remove('flex');
+            document.getElementById('thought-input').value = '';
         }
 
         function handleInput(e) {
