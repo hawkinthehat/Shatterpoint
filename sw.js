@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spirit-path-v2';
+const CACHE_NAME = 'spirit-path-v3';
 const ASSETS = [
   './',
   './index.html',

@@ -3,203 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spirit Path | Neural Reset</title>
-    <link rel="manifest" href="/manifest.json">
+    <title>Spirit Path | Project: Momentum</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: ui-sans-serif, system-ui; color: white; }
         canvas { display: block; }
-        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(45, 212, 191, 0.15); }
-        .ui-element { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-        .animate-glow { animation: pulse-soft 3s infinite; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .ui-element { transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #2dd4bf; cursor: pointer; border: 2px solid #0f172a; }
+        @keyframes pulse-slow { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } }
+        .animate-neuro { animation: pulse-slow 4s infinite ease-in-out; }
     </style>
 </head>
 <body>
 
     <div id="intro-overlay" class="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
         <div class="max-w-md w-full flex flex-col items-center">
-            <svg class="w-24 h-24 mb-6 drop-shadow-[0_0_25px_rgba(45,212,191,0.5)]" viewBox="0 0 512 512">
-                <path d="M256 120 L120 392 L392 392 Z" fill="#2dd4bf" id="logo-icon"/>
-            </svg>
-            
-            <h1 id="intro-title" class="text-teal-400 font-black text-6xl mb-1 italic uppercase tracking-tighter">Spirit Path</h1>
-            <p class="text-slate-500 text-[10px] uppercase tracking-[0.6em] mb-10 animate-glow">by Project: Momentum</p>
+            <h1 id="intro-title" class="text-teal-400 font-black text-6xl mb-2 italic uppercase tracking-tighter">Spirit Path</h1>
+            <p class="text-slate-500 text-[10px] uppercase tracking-[0.6em] mb-12">Neural Architecture by Momentum</p>
 
-            <div class="grid grid-cols-2 gap-4 w-full mb-8">
-                <div class="glass rounded-3xl p-5">
-                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Path Level</p>
-                    <p id="dash-level" class="text-teal-400 font-black text-3xl italic">LVL 1</p>
+            <div class="grid grid-cols-2 gap-4 w-full mb-10 font-black italic">
+                <div class="glass rounded-3xl p-6 border-b-4 border-teal-500/30">
+                    <p class="text-slate-500 text-[9px] uppercase tracking-widest not-italic mb-1">Spirit Rank</p>
+                    <p id="dash-level" class="text-teal-400 text-4xl">LVL 1</p>
                 </div>
-                <div class="glass rounded-3xl p-5">
-                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Cleared</p>
-                    <p id="dash-total" class="text-white font-black text-3xl italic">0</p>
+                <div class="glass rounded-3xl p-6 border-b-4 border-slate-700/30">
+                    <p class="text-slate-500 text-[9px] uppercase tracking-widest not-italic mb-1">Shattered</p>
+                    <p id="dash-total" class="text-white text-4xl">0</p>
                 </div>
             </div>
 
-            <button onclick="startApp()" class="w-full py-7 bg-teal-500 text-slate-950 font-black rounded-3xl active:scale-95 transition-all uppercase tracking-[0.3em] text-sm shadow-2xl shadow-teal-500/40">
-                Begin Path
+            <button onclick="startApp()" class="w-full py-8 bg-white text-slate-900 font-black rounded-3xl active:scale-95 transition-all uppercase tracking-[0.4em] text-sm shadow-2xl">
+                Initialize Reset
             </button>
         </div>
     </div>
 
     <div id="hud" class="ui-element opacity-0 absolute top-12 w-full flex justify-between px-10 z-20 pointer-events-none">
-        <div id="timer-display" class="text-teal-400 font-mono text-4xl tracking-tighter">02:00</div>
-        <div id="active-level" class="text-white font-black italic tracking-widest text-xl uppercase">Path 1</div>
+        <div id="timer-display" class="text-teal-400 font-mono text-5xl tracking-tighter">02:00</div>
+        <div id="active-level" class="text-white font-black italic tracking-widest text-xl uppercase">Osprey | Rank 1</div>
     </div>
 
-    <div id="controls" class="ui-element opacity-0 absolute bottom-12 w-full flex flex-col items-center gap-4 z-20">
-        <button onclick="cycleMode()" id="mode-btn" class="glass px-12 py-5 text-teal-400 rounded-full text-[11px] font-bold uppercase tracking-[0.4em] active:bg-teal-500/20 shadow-xl">
-            Path: STANDARD
-        </button>
-        <div id="sensitivity-container" class="mt-2 w-64 mx-auto flex flex-col gap-2">
-            <div class="flex justify-between text-[8px] uppercase tracking-widest text-slate-500 font-bold">
+    <div id="controls" class="ui-element opacity-0 absolute bottom-12 w-full flex flex-col items-center gap-6 z-20">
+        <div class="w-64">
+            <div class="flex justify-between text-[8px] uppercase tracking-[0.3em] text-slate-500 font-bold mb-2">
                 <span>Slow / Deep</span>
                 <span>Fast / Sharp</span>
             </div>
-            <input
-                type="range"
-                id="speed-slider"
-                min="0.01"
-                max="0.08"
-                step="0.005"
-                value="0.04"
-                class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
-            >
+            <input type="range" id="speed-slider" min="0.01" max="0.08" step="0.005" value="0.04" class="w-full">
+        </div>
+        <button onclick="cycleMode()" id="mode-btn" class="glass px-14 py-5 text-teal-400 rounded-full text-[11px] font-bold uppercase tracking-[0.5em] active:bg-white/10 shadow-xl border border-teal-500/20">
+            Mode: STANDARD
+        </button>
+    </div>
+
+    <div id="meta-overlay" class="ui-element opacity-0 pointer-events-none absolute inset-0 z-[60] bg-slate-950/95 flex flex-col items-center justify-center p-8 text-center">
+        <div class="animate-neuro mb-6">
+            <p id="plasticity-status" class="text-white font-black text-xs uppercase tracking-[0.5em]">Neuroplasticity Active</p>
+        </div>
+        <h2 class="text-white font-black text-3xl mb-2 italic uppercase">Reflection Gate</h2>
+        <p class="text-slate-400 text-sm mb-10 max-w-xs mx-auto">Select the state that matches your current momentum.</p>
+        
+        <div class="grid grid-cols-1 gap-4 w-full max-w-sm">
+            <button onclick="recordMeta('Stuck')" class="glass p-5 rounded-2xl text-rose-400 border-rose-500/20 font-black uppercase tracking-widest text-[10px]">Stuck / Frustrated</button>
+            <button onclick="recordMeta('Flow')" class="glass p-5 rounded-2xl text-teal-400 border-teal-500/20 font-black uppercase tracking-widest text-[10px]">Flow / Productive</button>
+            <button onclick="recordMeta('Rest')" class="glass p-5 rounded-2xl text-purple-400 border-purple-500/20 font-black uppercase tracking-widest text-[10px]">Rest / Prolactin</button>
         </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
     <script>
-        // --- Persistence ---
+        // --- Persistence & Spirit Data ---
         const STATS_KEY = 'spirit_path_stats';
         const LEGACY_STATS_KEY = 'shatterpoint_stats';
         let stats = JSON.parse(localStorage.getItem(STATS_KEY) || localStorage.getItem(LEGACY_STATS_KEY)) || { level: 1, total: 0 };
-        document.getElementById('dash-level').innerText = `LVL ${stats.level}`;
-        document.getElementById('dash-total').innerText = stats.total;
+        let metaLog = JSON.parse(localStorage.getItem('spirit_path_meta')) || [];
+        
+        const SPIRIT_THEMES = [
+            { name: "OSPREY", color: "#2dd4bf", freq: 110, scale: 9, path: (t) => ({ x: 16 * Math.pow(Math.sin(t), 3), y: -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) }) },
+            { name: "BEAR", color: "#fbbf24", freq: 85, scale: 15, path: (t) => ({ x: 10 * Math.cos(t) + 3 * Math.cos(6*t), y: 12 * Math.sin(t) - 2 * Math.sin(3*t) }) },
+            { name: "SALMON", color: "#38bdf8", freq: 140, scale: 13, path: (t) => ({ x: 18 * Math.cos(t) * Math.sin(t * 1.5), y: 8 * Math.sin(t) + 4 * Math.cos(t * 4) }) },
+            { name: "ORCA", color: "#f8fafc", freq: 65, scale: 16, path: (t) => { const r = 12 * (1 + Math.sin(t)); return { x: r * Math.cos(t) * (1 + 0.5 * Math.cos(t * 3)), y: r * Math.sin(t) - (t > Math.PI ? 8 : 0) }; } }
+        ];
 
-        // --- Core Engine Variables ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
         let fragments = [], glitches = [], stars = [], totemPoints = [];
-        let isPaused = true, mode = 0; // 0: Std, 1: EMDR, 2: Saccadic, 3: Zen
-        let centralPulse = 1.0, timeLeft = 120, lastJump = 0, emdrAngle = 0;
-        let speedMult = 0.04, drumInt = null;
-        let audioCtx, panner, rainGain, cedarGain, audioStarted = false;
+        let isPaused = true, mode = 0, speedMult = 0.04;
+        let timeLeft = 120, lastJump = 0, emdrAngle = 0;
+        let audioCtx, panner, cedarOsc, drumInt;
+        let audioReady = false;
+
+        // --- UI Initialization ---
+        document.getElementById('dash-level').innerText = `LVL ${stats.level}`;
+        document.getElementById('dash-total').innerText = stats.total;
 
         const slider = document.getElementById('speed-slider');
         slider.addEventListener('input', (e) => {
             speedMult = parseFloat(e.target.value);
-            // Sync drum speed to the visual speed.
-            if (drumInt) {
-                clearInterval(drumInt);
-                startDrum();
-            }
+            if (!isPaused && audioReady) startDrum();
         });
 
-        // --- Init Starfield & Totem Geometry ---
-        for (let i = 0; i < 150; i++) {
-            stars.push({ x: Math.random()*canvas.width-canvas.width/2, y: Math.random()*canvas.height-canvas.height/2, z: Math.random()*canvas.width, s: Math.random()*2 });
-        }
-
+        // --- Geometry & Audio ---
         function generateTotem() {
             totemPoints = [];
-            const count = 1200;
-            for (let i = 0; i < count; i++) {
-                const t = (i / count) * Math.PI * 2;
-                let x = 16 * Math.pow(Math.sin(t), 3);
-                let y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-                totemPoints.push({ x: x * 8 + canvas.width/2, y: y * 8 + canvas.height/2 - 40 });
+            const theme = SPIRIT_THEMES[Math.floor((stats.level - 1) / 5) % 4];
+            for (let i = 0; i < 1500; i++) {
+                const t = (i / 1500) * Math.PI * 2;
+                const pos = theme.path(t);
+                totemPoints.push({ x: pos.x * theme.scale + canvas.width/2, y: pos.y * theme.scale + canvas.height/2 });
             }
+            updateThemeUI(theme);
         }
-        generateTotem();
 
-        // --- Audio Engine (PNW Rain & Cedar) ---
+        function updateThemeUI(theme) {
+            document.getElementById('intro-title').style.color = theme.color;
+            document.getElementById('dash-level').style.color = theme.color;
+            document.getElementById('timer-display').style.color = theme.color;
+            document.getElementById('active-level').innerText = `${theme.name} | Rank ${stats.level}`;
+            document.getElementById('active-level').style.color = theme.color;
+            slider.style.accentColor = theme.color;
+        }
+
         function initAudio() {
-            if (audioStarted) return;
+            if (audioReady) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : audioCtx.createGain();
-            
-            // Cedar Hum
-            const cedar = audioCtx.createOscillator();
-            cedar.frequency.value = 110;
-            cedarGain = audioCtx.createGain(); cedarGain.gain.value = 0.05;
-            cedar.connect(cedarGain).connect(panner);
-            cedar.start();
-
-            // Rain Synth
-            if (audioCtx.createScriptProcessor) {
-                const bufferSize = 4096;
-                const pinkNoise = audioCtx.createScriptProcessor(bufferSize, 1, 1);
-                let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
-                pinkNoise.onaudioprocess = (e) => {
-                    const out = e.outputBuffer.getChannelData(0);
-                    for (let i=0; i<bufferSize; i++) {
-                        const w = Math.random()*2-1;
-                        b0 = 0.99886*b0+w*0.0555179; b1 = 0.99332*b1+w*0.0750759; b2 = 0.969*b2+w*0.153852;
-                        out[i] = (b0+b1+b2)*0.12;
-                    }
-                };
-                rainGain = audioCtx.createGain(); rainGain.gain.value = 0.2;
-                pinkNoise.connect(rainGain).connect(panner);
-            }
             panner.connect(audioCtx.destination);
-            audioStarted = true;
+            
+            cedarOsc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            const theme = SPIRIT_THEMES[Math.floor((stats.level - 1) / 5) % 4];
+            cedarOsc.frequency.setValueAtTime(theme.freq, audioCtx.currentTime);
+            g.gain.value = 0.06;
+            cedarOsc.connect(g).connect(panner);
+            cedarOsc.start();
+            audioReady = true;
+            startDrum();
         }
 
         function playDrum() {
-            if (!audioStarted) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(140, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(70, audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
-            osc.connect(gain).connect(panner);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
+            if (!audioReady) return;
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            const theme = SPIRIT_THEMES[Math.floor((stats.level - 1) / 5) % 4];
+            o.frequency.setValueAtTime(theme.freq * 0.8, audioCtx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            o.connect(g).connect(panner);
+            o.start(); o.stop(audioCtx.currentTime + 0.15);
         }
 
         function startDrum() {
+            if (!audioReady) return;
             if (drumInt) clearInterval(drumInt);
-            // Calculate BPM based on slider (0.01 = slow, 0.08 = fast).
-            const tempo = 1200 - (speedMult * 10000);
+            const tempo = 1100 - (speedMult * 10000);
             drumInt = setInterval(() => {
                 if (mode === 3) return;
                 playDrum();
-                // Double-beat offset scales with speed.
-                setTimeout(() => {
-                    if (mode !== 3) playDrum();
-                }, tempo / 4);
+                setTimeout(() => playDrum(), tempo / 3);
             }, tempo);
         }
 
-        // --- Game Objects ---
+        // --- Core Engine ---
         class Fragment {
             constructor(x, y) {
                 this.x = x; this.y = y;
                 const target = totemPoints[Math.floor(Math.random()*totemPoints.length)];
                 this.tx = target.x; this.ty = target.y;
-                this.vx = (Math.random()-0.5)*40; this.vy = (Math.random()-0.5)*40;
+                this.vx = (Math.random()-0.5)*55; this.vy = (Math.random()-0.5)*55;
                 this.isHome = false;
             }
             update() {
                 if(!this.isHome) {
-                    this.x += this.vx; this.y += this.vy; this.vx *= 0.88; this.vy *= 0.88;
-                    if(Math.abs(this.vx) < 0.5) {
-                        this.x += (this.tx - this.x)*0.12; this.y += (this.ty - this.y)*0.12;
-                    }
+                    this.x += this.vx; this.y += this.vy; this.vx *= 0.86; this.vy *= 0.86;
+                    if(Math.abs(this.vx) < 0.5) { this.x += (this.tx-this.x)*0.15; this.y += (this.ty-this.y)*0.15; }
                     if(Math.abs(this.x-this.tx) < 2) this.isHome = true;
                 }
             }
-            draw() {
-                ctx.fillStyle = this.isHome ? "rgba(45,212,191,0.3)" : "#2dd4bf";
+            draw(color) {
+                ctx.fillStyle = this.isHome ? `${color}44` : color;
                 ctx.fillRect(this.x, this.y, 2, 2);
             }
         }
@@ -207,9 +195,9 @@
         class Glitch {
             constructor() { this.spawn(); }
             spawn() {
-                if(mode === 2) { // Saccadic
-                    this.x = Math.random()*(canvas.width-100)+50;
-                    this.y = Math.random()*(canvas.height-100)+50;
+                if(mode === 2) { 
+                    this.x = Math.random()*(canvas.width-120)+60; 
+                    this.y = Math.random()*(canvas.height-120)+60;
                     lastJump = Date.now();
                 } else {
                     const a = Math.random()*Math.PI*2;
@@ -218,51 +206,43 @@
                 }
             }
             update() {
-                if(mode === 1) { // EMDR
+                if(mode === 1) { 
                     emdrAngle += speedMult;
-                    this.x = canvas.width/2 + Math.sin(emdrAngle)*(canvas.width*0.4);
+                    this.x = canvas.width/2 + Math.sin(emdrAngle)*(canvas.width*0.42);
                     this.y = canvas.height/2;
                     if (panner && panner.pan && audioCtx) {
-                        const panValue = (this.x / canvas.width) * 2 - 1;
-                        panner.pan.setTargetAtTime(panValue, audioCtx.currentTime, 0.1);
+                        panner.pan.setTargetAtTime((this.x/canvas.width)*2-1, audioCtx.currentTime, 0.1);
                     }
-                } else if(mode === 2) { // Saccadic
-                    if(Date.now()-lastJump > 700) this.spawn();
+                } else if(mode === 2) { 
+                    if(Date.now()-lastJump > 650) this.spawn();
                 } else {
                     const dx = canvas.width/2 - this.x, dy = canvas.height/2 - this.y;
                     const d = Math.sqrt(dx*dx+dy*dy);
-                    this.x += (dx/d)*3; this.y += (dy/d)*3;
+                    this.x += (dx/d)*4.5; this.y += (dy/d)*4.5;
                 }
             }
             draw() {
-                ctx.strokeStyle = "#f43f5e"; ctx.lineWidth = 2;
-                ctx.strokeRect(this.x-10, this.y-10, 20, 20);
+                ctx.strokeStyle = "#f43f5e"; ctx.lineWidth = 4;
+                ctx.strokeRect(this.x-14, this.y-14, 28, 28);
             }
         }
 
-        // --- Core Loop ---
         function animate() {
-            ctx.fillStyle = mode === 3 ? "#020617" : "#0f172a";
+            const theme = SPIRIT_THEMES[Math.floor((stats.level - 1) / 5) % 4];
+            ctx.fillStyle = mode === 3 ? "#020617" : "#080c18";
             ctx.fillRect(0,0,canvas.width,canvas.height);
 
             if(!isPaused) {
-                // Background Stars
                 stars.forEach(s => {
-                    let speed = mode === 2 ? 4 : (mode === 3 ? 0.4 : 1.2);
+                    let speed = mode === 2 ? 6 : (mode === 3 ? 0.35 : 1.8);
                     s.z -= speed; if(s.z<=0) s.z=canvas.width;
                     const sx = (s.x*(canvas.width/s.z))+canvas.width/2;
                     const sy = (s.y*(canvas.width/s.z))+canvas.height/2;
-                    ctx.fillStyle = mode === 2 ? `rgba(244,63,94,${1-s.z/canvas.width})` : `rgba(45,212,191,${1-s.z/canvas.width})`;
+                    const alpha = Math.max(0, Math.min(1, 1 - s.z/canvas.width));
+                    ctx.fillStyle = mode === 2 ? `rgba(244,63,94,${alpha})` : `rgba(${parseInt(theme.color.slice(1,3),16)}, ${parseInt(theme.color.slice(3,5),16)}, ${parseInt(theme.color.slice(5,7),16)}, ${alpha})`;
                     ctx.beginPath(); ctx.arc(sx, sy, s.s*(canvas.width/s.z), 0, Math.PI*2); ctx.fill();
                 });
-
-                // Totem Draw
-                ctx.strokeStyle = "rgba(45,212,191,0.1)";
-                ctx.beginPath();
-                totemPoints.forEach((p, i) => { if(i===0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-                ctx.closePath(); ctx.stroke();
-
-                fragments.forEach(f => { f.update(); f.draw(); });
+                fragments.forEach(f => { f.update(); f.draw(theme.color); });
                 if(mode !== 3) {
                     if(glitches.length < 1) glitches.push(new Glitch());
                     glitches.forEach(g => { g.update(); g.draw(); });
@@ -271,23 +251,24 @@
             requestAnimationFrame(animate);
         }
 
-        // --- Controls & Lifecycle ---
+        // --- App Handlers ---
         function startApp() {
             try {
                 initAudio();
-                startDrum();
             } catch (err) {
-                // Keep the visual experience usable even if audio APIs are unavailable.
                 console.warn('Audio initialization failed:', err);
             }
             document.getElementById('intro-overlay').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('intro-overlay').style.display = 'none';
-                document.getElementById('hud').style.opacity = '0.5';
+                document.getElementById('hud').style.opacity = '1';
                 document.getElementById('controls').style.opacity = '1';
                 isPaused = false;
-            }, 600);
-            setInterval(() => { if(!isPaused && timeLeft>0) timeLeft--; updateHUD(); }, 1000);
+            }, 800);
+            const timer = setInterval(() => { 
+                if(!isPaused && timeLeft > 0) { timeLeft--; updateHUD(); }
+                if(timeLeft <= 0) { clearInterval(timer); endSession(); }
+            }, 1000);
         }
 
         function updateHUD() {
@@ -295,33 +276,46 @@
             document.getElementById('timer-display').innerText = `${m}:${s.toString().padStart(2,'0')}`;
         }
 
+        function endSession() {
+            isPaused = true;
+            if(drumInt) clearInterval(drumInt);
+            document.getElementById('meta-overlay').classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function recordMeta(state) {
+            metaLog.push({ time: new Date().toISOString(), lvl: stats.level, spirit: SPIRIT_THEMES[Math.floor((stats.level-1)/5)%4].name, state: state });
+            localStorage.setItem('spirit_path_meta', JSON.stringify(metaLog));
+            location.reload();
+        }
+
         function cycleMode() {
             mode = (mode + 1) % 4;
             const btn = document.getElementById('mode-btn');
-            const labels = ["Path: STANDARD", "Path: EMDR (Calm)", "Path: SACCADIC (Focus)", "Path: ZEN"];
+            const labels = ["Mode: STANDARD", "Mode: EMDR", "Mode: SACCADIC", "Mode: ZEN"];
             btn.innerText = labels[mode];
-            btn.style.color = mode === 2 ? "#f43f5e" : (mode === 3 ? "#a855f7" : "#2dd4bf");
+            btn.style.color = mode === 2 ? "#f43f5e" : "#2dd4bf";
             glitches = [];
+            if (panner && panner.pan && audioCtx && mode !== 1) {
+                panner.pan.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+            }
         }
 
         function handleInput(e) {
             if(isPaused || mode === 3) return;
-            const x = e.clientX || e.touches[0].clientX;
-            const y = e.clientY || e.touches[0].clientY;
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
             glitches.forEach((g, i) => {
-                if(Math.sqrt((x-g.x)**2 + (y-g.y)**2) < 50) {
-                    if("vibrate" in navigator) navigator.vibrate([40, 20]);
+                if(Math.sqrt((x-g.x)**2 + (y-g.y)**2) < 70) {
+                    if("vibrate" in navigator) navigator.vibrate(25);
                     glitches.splice(i, 1); stats.total++;
-                    for(let j=0; j<25; j++) fragments.push(new Fragment(g.x, g.y));
-                    if(stats.total%20===0) stats.level++;
+                    for(let j=0; j<40; j++) fragments.push(new Fragment(g.x, g.y));
+                    if(stats.total % 25 === 0) { stats.level++; generateTotem(); }
                     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-                    document.getElementById('active-level').innerText = `Path ${stats.level}`;
+                    document.getElementById('dash-total').innerText = stats.total;
+                    document.getElementById('dash-level').innerText = `LVL ${stats.level}`;
                 }
             });
         }
-
-        window.addEventListener('mousedown', handleInput);
-        window.addEventListener('touchstart', (e) => { handleInput(e); e.preventDefault(); }, {passive: false});
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').then((registration) => {
@@ -347,7 +341,10 @@
             });
         }
 
-        animate();
+        window.addEventListener('mousedown', handleInput);
+        window.addEventListener('touchstart', (e) => { handleInput(e); e.preventDefault(); }, {passive: false});
+        for (let i = 0; i < 150; i++) stars.push({ x: Math.random()*canvas.width-canvas.width/2, y: Math.random()*canvas.height-canvas.height/2, z: Math.random()*canvas.width, s: Math.random()*2.5 });
+        generateTotem(); animate();
     </script>
 </body>
 </html>
