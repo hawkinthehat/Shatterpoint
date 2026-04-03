@@ -88,6 +88,7 @@
         let centralPulse = 1.0, timeLeft = 120, lastJump = 0, emdrAngle = 0;
         let speedMult = 0.04, drumInt = null;
         let audioCtx, panner, rainGain, cedarGain, audioStarted = false;
+        let spiritNode, landscapeGain, spiritInterval = null;
 
         const slider = document.getElementById('speed-slider');
         slider.addEventListener('input', (e) => {
@@ -145,6 +146,95 @@
             pinkNoise.connect(rainGain).connect(panner);
             panner.connect(audioCtx.destination);
             audioStarted = true;
+        }
+
+        function setPannerPosition(pannerNode, x, y, z) {
+            if ('positionX' in pannerNode && pannerNode.positionX) {
+                pannerNode.positionX.setValueAtTime(x, audioCtx.currentTime);
+                pannerNode.positionY.setValueAtTime(y, audioCtx.currentTime);
+                pannerNode.positionZ.setValueAtTime(z, audioCtx.currentTime);
+                return;
+            }
+            // Fallback for browsers that still expose legacy positioning only.
+            if (typeof pannerNode.setPosition === 'function') pannerNode.setPosition(x, y, z);
+        }
+
+        function startSpiritLandscape() {
+            if (!audioCtx) initAudio();
+            if (!audioCtx || landscapeGain) return;
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            landscapeGain = audioCtx.createGain();
+            landscapeGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            landscapeGain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 2);
+            landscapeGain.connect(audioCtx.destination);
+
+            // "Cedar wind": pink-ish noise sculpted by a lowpass filter.
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+            spiritNode = audioCtx.createBufferSource();
+            spiritNode.buffer = noiseBuffer;
+            spiritNode.loop = true;
+
+            const biquadFilter = audioCtx.createBiquadFilter();
+            biquadFilter.type = "lowpass";
+            biquadFilter.frequency.setValueAtTime(400, audioCtx.currentTime);
+            biquadFilter.Q.setValueAtTime(10, audioCtx.currentTime);
+
+            const spiritPanner = audioCtx.createPanner();
+            spiritPanner.panningModel = 'HRTF';
+            spiritPanner.distanceModel = 'inverse';
+            spiritPanner.refDistance = 1;
+            spiritPanner.rolloffFactor = 0.2;
+
+            spiritNode.connect(biquadFilter);
+            biquadFilter.connect(spiritPanner);
+            spiritPanner.connect(landscapeGain);
+
+            let angle = 0;
+            if (spiritInterval) clearInterval(spiritInterval);
+            spiritInterval = setInterval(() => {
+                angle += 0.02;
+                setPannerPosition(spiritPanner, Math.sin(angle) * 3, 0, Math.cos(angle));
+                biquadFilter.frequency.setValueAtTime(300 + Math.random() * 200, audioCtx.currentTime + 0.1);
+            }, 100);
+
+            spiritNode.start();
+            spiritNode.onended = () => {
+                if (spiritInterval) {
+                    clearInterval(spiritInterval);
+                    spiritInterval = null;
+                }
+            };
+        }
+
+        function stopSpiritLandscape() {
+            if (!landscapeGain || !audioCtx) return;
+
+            if (spiritInterval) {
+                clearInterval(spiritInterval);
+                spiritInterval = null;
+            }
+
+            const fadeOutAt = audioCtx.currentTime + 1;
+            landscapeGain.gain.cancelScheduledValues(audioCtx.currentTime);
+            landscapeGain.gain.linearRampToValueAtTime(0, fadeOutAt);
+
+            if (spiritNode) {
+                try { spiritNode.stop(fadeOutAt + 0.05); } catch (_) {}
+                spiritNode = null;
+            }
+
+            setTimeout(() => {
+                if (landscapeGain) {
+                    landscapeGain.disconnect();
+                    landscapeGain = null;
+                }
+            }, 1200);
         }
 
         function playDrum() {
@@ -270,6 +360,7 @@
         // --- Controls & Lifecycle ---
         function startApp() {
             initAudio();
+            startSpiritLandscape();
             startDrum();
             document.getElementById('intro-overlay').style.opacity = '0';
             setTimeout(() => {
@@ -313,6 +404,7 @@
 
         window.addEventListener('mousedown', handleInput);
         window.addEventListener('touchstart', (e) => { handleInput(e); e.preventDefault(); }, {passive: false});
+        window.addEventListener('beforeunload', stopSpiritLandscape);
         animate();
     </script>
 </body>
