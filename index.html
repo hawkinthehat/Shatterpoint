@@ -94,7 +94,7 @@
             <p id="plasticity-status" class="text-white font-black text-xs uppercase tracking-[0.5em]">Neuroplasticity Active</p>
         </div>
         <h2 class="text-white font-black text-3xl mb-2 italic uppercase">Reflection Gate</h2>
-        <p class="text-slate-400 text-sm mb-10 max-w-xs mx-auto">Select the state that matches your current momentum.</p>
+        <p id="meta-prompt" class="text-slate-400 text-sm mb-10 max-w-xs mx-auto">Select the state that matches your current momentum.</p>
         
         <div class="grid grid-cols-1 gap-4 w-full max-w-sm">
             <button onclick="recordMeta('Stuck')" class="glass p-5 rounded-2xl text-rose-400 border-rose-500/20 font-black uppercase tracking-widest text-[10px]">Stuck / Frustrated</button>
@@ -340,7 +340,15 @@
         function endSession() {
             isPaused = true;
             if(drumInt) clearInterval(drumInt);
+            
+            // Update the Reflection Gate text for Bio-Feedback.
+            document.getElementById('plasticity-status').innerText = "NEURAL PLASTICITY ACTIVE | 90s WINDOW";
+            document.getElementById('meta-prompt').innerText = "Label your state to consolidate the reset.";
+
             document.getElementById('meta-overlay').classList.remove('opacity-0', 'pointer-events-none');
+
+            // Trigger a long, gentle vibration to signal the Prolactin shift.
+            if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
         }
 
         function recordMeta(state) {
