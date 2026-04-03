@@ -5,5 +5,5 @@ What’s Inside:
 🛡️ Cedar Shield Mode: Bilateral EMDR tracing to stop a panic spike in its tracks.
 🔒 100% Private: No data collection. No cloud. Just you and the tool.
 It’s built for my community here in Marysville/Everett, and it’s free for everyone. Check it out, install it to your home screen, and let me know what you think.
-[Your GitHub Link Here]
+https://hawkinthehat.github.io/Shatterpoint/
 #SXT’EKW #NeuralWeaver #MentalHealthTech #CoastSalish #BuildInPublic
