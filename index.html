@@ -38,6 +38,36 @@
             <button onclick="startApp()" class="w-full py-8 bg-white text-slate-900 font-black rounded-3xl active:scale-95 transition-all uppercase tracking-[0.4em] text-sm shadow-2xl">
                 Initialize Reset
             </button>
+
+            <div id="quick-tips" class="mt-12 w-full max-w-sm text-left border-t border-white/5 pt-6">
+                <p class="text-slate-500 text-[9px] uppercase tracking-[0.3em] font-black mb-4 px-2">System Insights</p>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group">
+                        <div class="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 font-bold text-xs shrink-0">🎧</div>
+                        <div>
+                            <p class="text-white text-[11px] font-bold uppercase tracking-wider mb-1">Bilateral Sync</p>
+                            <p class="text-slate-500 text-[10px] leading-relaxed">Always use headphones. The panning drum synchronizes brain hemispheres to break logic loops.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group">
+                        <div class="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-400 font-bold text-xs shrink-0">👁️</div>
+                        <div>
+                            <p class="text-white text-[11px] font-bold uppercase tracking-wider mb-1">Saccadic Overclock</p>
+                            <p class="text-slate-500 text-[10px] leading-relaxed">Use Red mode for sharp jumps. This triggers Dopamine and high-speed problem solving.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group">
+                        <div class="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 font-bold text-xs shrink-0">🧠</div>
+                        <div>
+                            <p class="text-white text-[11px] font-bold uppercase tracking-wider mb-1">Plasticity Save</p>
+                            <p class="text-slate-500 text-[10px] leading-relaxed">Complete the 2-minute gate. The Prolactin shift after the session 'locks in' your mental progress.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -169,6 +199,36 @@
                 playDrum();
                 setTimeout(() => playDrum(), tempo / 3);
             }, tempo);
+        }
+
+        function checkFirstTime() {
+            if (!localStorage.getItem('spirit_path_initiated')) {
+                const guide = document.createElement('div');
+                guide.id = "guide-overlay";
+                guide.className = "absolute inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center p-10 text-center";
+                guide.innerHTML = `
+                    <div class="max-w-sm">
+                        <p class="text-teal-400 font-black text-xs uppercase tracking-[0.4em] mb-4 text-left">Step 1: Audio</p>
+                        <h3 class="text-white font-bold text-lg mb-6 text-left">Wear Headphones. The drumming is bilateral.</h3>
+                        
+                        <p class="text-teal-400 font-black text-xs uppercase tracking-[0.4em] mb-4 text-left">Step 2: Eye Tracking</p>
+                        <h3 class="text-white font-bold text-lg mb-6 text-left">Follow the shapes. This rewires your focus.</h3>
+                        
+                        <p class="text-teal-400 font-black text-xs uppercase tracking-[0.4em] mb-4 text-left">Step 3: The Path</p>
+                        <h3 class="text-white font-bold text-lg mb-10 text-left">5 Levels per Spirit. Reach the Orca.</h3>
+                        
+                        <button onclick="dismissGuide()" class="w-full py-6 border-2 border-teal-500 text-teal-400 font-black rounded-2xl uppercase tracking-widest text-xs">
+                            Begin Initiation
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(guide);
+            }
+        }
+
+        function dismissGuide() {
+            localStorage.setItem('spirit_path_initiated', 'true');
+            document.getElementById('guide-overlay').remove();
         }
 
         // --- Core Engine ---
@@ -325,7 +385,7 @@
         window.addEventListener('mousedown', handleInput);
         window.addEventListener('touchstart', (e) => { handleInput(e); e.preventDefault(); }, {passive: false});
         for (let i = 0; i < 150; i++) stars.push({ x: Math.random()*canvas.width-canvas.width/2, y: Math.random()*canvas.height-canvas.height/2, z: Math.random()*canvas.width, s: Math.random()*2.5 });
-        generateTotem(); animate();
+        generateTotem(); animate(); checkFirstTime();
     </script>
 </body>
 </html>
