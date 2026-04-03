@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shatterpoint-v1';
+const CACHE_NAME = 'spirit-path-v1';
 const ASSETS = [
   './',
   './index.html',

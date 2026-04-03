@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shatterpoint | Spirit Reset</title>
+    <title>Spirit Path | Neural Reset</title>
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -73,7 +73,9 @@
 
     <script>
         // --- Persistence ---
-        let stats = JSON.parse(localStorage.getItem('shatterpoint_stats')) || { level: 1, total: 0 };
+        const STATS_KEY = 'spirit_path_stats';
+        const LEGACY_STATS_KEY = 'shatterpoint_stats';
+        let stats = JSON.parse(localStorage.getItem(STATS_KEY) || localStorage.getItem(LEGACY_STATS_KEY)) || { level: 1, total: 0 };
         document.getElementById('dash-level').innerText = `LVL ${stats.level}`;
         document.getElementById('dash-total').innerText = stats.total;
 
@@ -305,7 +307,7 @@
                     glitches.splice(i, 1); stats.total++;
                     for(let j=0; j<25; j++) fragments.push(new Fragment(g.x, g.y));
                     if(stats.total%20===0) stats.level++;
-                    localStorage.setItem('shatterpoint_stats', JSON.stringify(stats));
+                    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
                     document.getElementById('active-level').innerText = `Rank ${stats.level}`;
                 }
             });
