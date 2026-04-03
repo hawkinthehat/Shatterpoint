@@ -7,6 +7,7 @@
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        :root { --gold: #fbbf24; }
         body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: ui-sans-serif, system-ui; color: white; }
         canvas { display: block; }
         .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(45, 212, 191, 0.15); }
@@ -83,10 +84,12 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let fragments = [], glitches = [], stars = [], totemPoints = [];
+        let fragments = [], glitches = [], stars = [], totemPoints = [], weaveGrid = [];
         let isPaused = true, mode = 0; // 0: Std, 1: EMDR, 2: Saccadic, 3: Zen
         let centralPulse = 1.0, timeLeft = 120, lastJump = 0, emdrAngle = 0;
         let speedMult = 0.04, drumInt = null;
+        const GRID_SIZE = 8;
+        const mouse = { x: null, y: null };
         let audioCtx, panner, rainGain, cedarGain, audioStarted = false;
 
         const slider = document.getElementById('speed-slider');
@@ -115,6 +118,61 @@
             }
         }
         generateTotem();
+
+        function initWeaveGrid() {
+            weaveGrid = [];
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    weaveGrid.push({
+                        row,
+                        col,
+                        x: (canvas.width / (GRID_SIZE + 1)) * (col + 1),
+                        y: (canvas.height / (GRID_SIZE + 1)) * (row + 1),
+                        locked: false
+                    });
+                }
+            }
+        }
+        initWeaveGrid();
+
+        function drawWeave() {
+            const hasPointer = mouse.x !== null && mouse.y !== null;
+            const goldStep = Math.max(canvas.width, canvas.height) / GRID_SIZE + 10;
+
+            weaveGrid.forEach((point) => {
+                if (hasPointer && !point.locked) {
+                    const d = Math.sqrt((mouse.x - point.x) ** 2 + (mouse.y - point.y) ** 2);
+                    if (d < 40) point.locked = true;
+                }
+
+                if (!point.locked) return;
+                ctx.fillStyle = "var(--gold)";
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.strokeStyle = "rgba(251, 191, 36, 0.4)";
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 1;
+            weaveGrid.forEach((point) => {
+                if (!point.locked) return;
+                const right = weaveGrid.find((p2) => p2.row === point.row && p2.col === point.col + 1);
+                const down = weaveGrid.find((p2) => p2.row === point.row + 1 && p2.col === point.col);
+
+                [right, down].forEach((p2) => {
+                    if (!p2 || !p2.locked) return;
+                    const d2 = Math.sqrt((p2.x - point.x) ** 2 + (p2.y - point.y) ** 2);
+                    if (d2 < goldStep) {
+                        ctx.beginPath();
+                        ctx.moveTo(point.x, point.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                });
+            });
+            ctx.setLineDash([]);
+        }
 
         // --- Audio Engine (PNW Rain & Cedar) ---
         function initAudio() {
@@ -263,6 +321,7 @@
                     if(glitches.length < 1) glitches.push(new Glitch());
                     glitches.forEach(g => { g.update(); g.draw(); });
                 }
+                drawWeave();
             }
             requestAnimationFrame(animate);
         }
@@ -299,6 +358,8 @@
             if(isPaused || mode === 3) return;
             const x = e.clientX || e.touches[0].clientX;
             const y = e.clientY || e.touches[0].clientY;
+            mouse.x = x;
+            mouse.y = y;
             glitches.forEach((g, i) => {
                 if(Math.sqrt((x-g.x)**2 + (y-g.y)**2) < 50) {
                     if("vibrate" in navigator) navigator.vibrate([40, 20]);
@@ -311,6 +372,29 @@
             });
         }
 
+        function trackPointer(e) {
+            const source = e.touches ? e.touches[0] : e;
+            if (!source) return;
+            mouse.x = source.clientX;
+            mouse.y = source.clientY;
+        }
+
+        function clearPointer() {
+            mouse.x = null;
+            mouse.y = null;
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            generateTotem();
+            initWeaveGrid();
+        });
+        window.addEventListener('mousemove', trackPointer);
+        window.addEventListener('mouseleave', clearPointer);
+        window.addEventListener('touchmove', (e) => { trackPointer(e); e.preventDefault(); }, {passive: false});
+        window.addEventListener('touchend', clearPointer);
+        window.addEventListener('touchcancel', clearPointer);
         window.addEventListener('mousedown', handleInput);
         window.addEventListener('touchstart', (e) => { handleInput(e); e.preventDefault(); }, {passive: false});
         animate();
