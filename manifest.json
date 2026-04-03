@@ -1,18 +1,18 @@
 {
-  "short_name": "Spirit Path",
-  "name": "Spirit Path: Neural Reset",
-  "description": "A tactical neuro-performance tool by Project: Momentum.",
+  "name": "Spirit Path",
+  "short_name": "SpiritPath",
+  "description": "Neural Architecture & Momentum Reset",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#2dd4bf",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzBmMTcyYSIvPjxwYXRoIGQ9Ik0yNTYgMTI4IEwxMjggMzg0IEwzODQgMzg0IFoiIGZpbGw9IiMyZGQ0YmYiLz48L3N2Zz4=",
+      "src": "https://cdn-icons-png.flaticon.com/512/1141/1141771.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#2dd4bf",
-  "orientation": "portrait"
+  ]
 }
