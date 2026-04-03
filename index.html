@@ -322,6 +322,12 @@
             } catch (err) {
                 console.warn('Audio initialization failed:', err);
             }
+            const quickTips = document.getElementById('quick-tips');
+            if (quickTips) {
+                quickTips.style.transition = 'opacity 0.25s ease';
+                quickTips.style.opacity = '0';
+                quickTips.style.pointerEvents = 'none';
+            }
             document.getElementById('intro-overlay').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('intro-overlay').style.display = 'none';
