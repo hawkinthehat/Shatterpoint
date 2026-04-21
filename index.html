@@ -2,409 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shatterpoint | Spirit Reset</title>
-    <link rel="manifest" href="/manifest.json">
+    <title>KW’ÉKW’E | Osprey Scout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: ui-sans-serif, system-ui; color: white; }
+        body { margin: 0; background: #020617; overflow: hidden; touch-action: none; }
         canvas { display: block; }
-        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(45, 212, 191, 0.15); }
-        .ui-element { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-        .animate-glow { animation: pulse-soft 3s infinite; }
     </style>
 </head>
 <body>
-
-    <div id="intro-overlay" class="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div class="max-w-md w-full flex flex-col items-center">
-            <svg class="w-24 h-24 mb-6 drop-shadow-[0_0_25px_rgba(45,212,191,0.5)]" viewBox="0 0 512 512">
-                <path d="M256 120 L120 392 L392 392 Z" fill="#2dd4bf" id="logo-icon"/>
-            </svg>
-            
-            <h1 id="intro-title" class="text-teal-400 font-black text-6xl mb-1 italic uppercase tracking-tighter">Spirit Path</h1>
-            <p class="text-slate-500 text-[10px] uppercase tracking-[0.6em] mb-10 animate-glow">by Project: Momentum</p>
-
-            <div class="grid grid-cols-2 gap-4 w-full mb-8">
-                <div class="glass rounded-3xl p-5">
-                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Rank</p>
-                    <p id="dash-level" class="text-teal-400 font-black text-3xl italic">LVL 1</p>
-                </div>
-                <div class="glass rounded-3xl p-5">
-                    <p class="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Shattered</p>
-                    <p id="dash-total" class="text-white font-black text-3xl italic">0</p>
-                </div>
-            </div>
-
-            <button onclick="startApp()" class="w-full py-7 bg-teal-500 text-slate-950 font-black rounded-3xl active:scale-95 transition-all uppercase tracking-[0.3em] text-sm shadow-2xl shadow-teal-500/40">
-                Initialize Reset
-            </button>
-        </div>
-    </div>
-
-    <div id="hud" class="ui-element opacity-0 absolute top-12 w-full flex justify-between px-10 z-20 pointer-events-none">
-        <div id="timer-display" class="text-teal-400 font-mono text-4xl tracking-tighter">02:00</div>
-        <div id="active-level" class="text-white font-black italic tracking-widest text-xl uppercase">Rank 1</div>
-    </div>
-
-    <div id="controls" class="ui-element opacity-0 absolute bottom-12 w-full flex flex-col items-center gap-4 z-20">
-        <button onclick="cycleMode()" id="mode-btn" class="glass px-12 py-5 text-teal-400 rounded-full text-[11px] font-bold uppercase tracking-[0.4em] active:bg-teal-500/20 shadow-xl">
-            Mode: STANDARD
-        </button>
-        <div id="sensitivity-container" class="mt-2 w-64 mx-auto flex flex-col gap-2">
-            <div class="flex justify-between text-[8px] uppercase tracking-widest text-slate-500 font-bold">
-                <span>Slow / Deep</span>
-                <span>Fast / Sharp</span>
-            </div>
-            <input
-                type="range"
-                id="speed-slider"
-                min="0.01"
-                max="0.08"
-                step="0.005"
-                value="0.04"
-                class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
-            >
-        </div>
-    </div>
-
     <canvas id="gameCanvas"></canvas>
 
     <script>
-        // --- Persistence ---
-        let stats = JSON.parse(localStorage.getItem('shatterpoint_stats')) || { level: 1, total: 0 };
-        document.getElementById('dash-level').innerText = `LVL ${stats.level}`;
-        document.getElementById('dash-total').innerText = stats.total;
-
-        // --- Core Engine Variables ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let fragments = [], glitches = [], stars = [], totemPoints = [];
-        let isPaused = true, mode = 0; // 0: Std, 1: EMDR, 2: Saccadic, 3: Zen
-        let centralPulse = 1.0, timeLeft = 120, lastJump = 0, emdrAngle = 0;
-        let speedMult = 0.04, drumInt = null;
-        let audioCtx, panner, rainGain, cedarGain, audioStarted = false;
-        let spiritNode, landscapeGain, spiritInterval = null;
+        let tomahawks = [], fragments = [], totemPoints = [];
 
-        const slider = document.getElementById('speed-slider');
-        slider.addEventListener('input', (e) => {
-            speedMult = parseFloat(e.target.value);
-            // Sync drum speed to the visual speed.
-            if (drumInt) {
-                clearInterval(drumInt);
-                startDrum();
-            }
-        });
-
-        // --- Init Starfield & Totem Geometry ---
-        for (let i = 0; i < 150; i++) {
-            stars.push({ x: Math.random()*canvas.width-canvas.width/2, y: Math.random()*canvas.height-canvas.height/2, z: Math.random()*canvas.width, s: Math.random()*2 });
-        }
-
-        function generateTotem() {
+        // 1. Osprey Totem Geometry
+        function generateOspreyTotem() {
             totemPoints = [];
             const count = 1200;
             for (let i = 0; i < count; i++) {
                 const t = (i / count) * Math.PI * 2;
-                let x = 16 * Math.pow(Math.sin(t), 3);
-                let y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-                totemPoints.push({ x: x * 8 + canvas.width/2, y: y * 8 + canvas.height/2 - 40 });
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                totemPoints.push({ x: x * 10 + canvas.width/2, y: y * 10 + canvas.height/2 });
             }
         }
-        generateTotem();
 
-        // --- Audio Engine (PNW Rain & Cedar) ---
-        function initAudio() {
-            if (audioStarted) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            panner = audioCtx.createStereoPanner();
-            
-            // Cedar Hum
-            const cedar = audioCtx.createOscillator();
-            cedar.frequency.value = 110;
-            cedarGain = audioCtx.createGain(); cedarGain.gain.value = 0.05;
-            cedar.connect(cedarGain).connect(panner);
-            cedar.start();
-
-            // Rain Synth
-            const bufferSize = 4096;
-            const pinkNoise = audioCtx.createScriptProcessor(bufferSize, 1, 1);
-            let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
-            pinkNoise.onaudioprocess = (e) => {
-                const out = e.outputBuffer.getChannelData(0);
-                for (let i=0; i<bufferSize; i++) {
-                    const w = Math.random()*2-1;
-                    b0 = 0.99886*b0+w*0.0555179; b1 = 0.99332*b1+w*0.0750759; b2 = 0.969*b2+w*0.153852;
-                    out[i] = (b0+b1+b2)*0.12;
-                }
-            };
-            rainGain = audioCtx.createGain(); rainGain.gain.value = 0.2;
-            pinkNoise.connect(rainGain).connect(panner);
-            panner.connect(audioCtx.destination);
-            audioStarted = true;
-        }
-
-        function setPannerPosition(pannerNode, x, y, z) {
-            if ('positionX' in pannerNode && pannerNode.positionX) {
-                pannerNode.positionX.setValueAtTime(x, audioCtx.currentTime);
-                pannerNode.positionY.setValueAtTime(y, audioCtx.currentTime);
-                pannerNode.positionZ.setValueAtTime(z, audioCtx.currentTime);
-                return;
+        class Tomahawk {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = -50;
+                this.speed = 2 + Math.random() * 3;
             }
-            // Fallback for browsers that still expose legacy positioning only.
-            if (typeof pannerNode.setPosition === 'function') pannerNode.setPosition(x, y, z);
-        }
-
-        function startSpiritLandscape() {
-            if (!audioCtx) initAudio();
-            if (!audioCtx || landscapeGain) return;
-
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            landscapeGain = audioCtx.createGain();
-            landscapeGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            landscapeGain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 2);
-            landscapeGain.connect(audioCtx.destination);
-
-            // "Cedar wind": pink-ish noise sculpted by a lowpass filter.
-            const bufferSize = 2 * audioCtx.sampleRate;
-            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const output = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-
-            spiritNode = audioCtx.createBufferSource();
-            spiritNode.buffer = noiseBuffer;
-            spiritNode.loop = true;
-
-            const biquadFilter = audioCtx.createBiquadFilter();
-            biquadFilter.type = "lowpass";
-            biquadFilter.frequency.setValueAtTime(400, audioCtx.currentTime);
-            biquadFilter.Q.setValueAtTime(10, audioCtx.currentTime);
-
-            const spiritPanner = audioCtx.createPanner();
-            spiritPanner.panningModel = 'HRTF';
-            spiritPanner.distanceModel = 'inverse';
-            spiritPanner.refDistance = 1;
-            spiritPanner.rolloffFactor = 0.2;
-
-            spiritNode.connect(biquadFilter);
-            biquadFilter.connect(spiritPanner);
-            spiritPanner.connect(landscapeGain);
-
-            let angle = 0;
-            if (spiritInterval) clearInterval(spiritInterval);
-            spiritInterval = setInterval(() => {
-                angle += 0.02;
-                setPannerPosition(spiritPanner, Math.sin(angle) * 3, 0, Math.cos(angle));
-                biquadFilter.frequency.setValueAtTime(300 + Math.random() * 200, audioCtx.currentTime + 0.1);
-            }, 100);
-
-            spiritNode.start();
-            spiritNode.onended = () => {
-                if (spiritInterval) {
-                    clearInterval(spiritInterval);
-                    spiritInterval = null;
-                }
-            };
-        }
-
-        function stopSpiritLandscape() {
-            if (!landscapeGain || !audioCtx) return;
-
-            if (spiritInterval) {
-                clearInterval(spiritInterval);
-                spiritInterval = null;
+            update() { this.y += this.speed; }
+            draw() {
+                ctx.fillStyle = "#2dd4bf";
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - 10, this.y + 30);
+                ctx.lineTo(this.x + 10, this.y + 30);
+                ctx.fill();
             }
-
-            const fadeOutAt = audioCtx.currentTime + 1;
-            landscapeGain.gain.cancelScheduledValues(audioCtx.currentTime);
-            landscapeGain.gain.linearRampToValueAtTime(0, fadeOutAt);
-
-            if (spiritNode) {
-                try { spiritNode.stop(fadeOutAt + 0.05); } catch (_) {}
-                spiritNode = null;
-            }
-
-            setTimeout(() => {
-                if (landscapeGain) {
-                    landscapeGain.disconnect();
-                    landscapeGain = null;
-                }
-            }, 1200);
         }
 
-        function playDrum() {
-            if (!audioStarted) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(140, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(70, audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
-            osc.connect(gain).connect(panner);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
-        }
-
-        function startDrum() {
-            if (drumInt) clearInterval(drumInt);
-            // Calculate BPM based on slider (0.01 = slow, 0.08 = fast).
-            const tempo = 1200 - (speedMult * 10000);
-            drumInt = setInterval(() => {
-                if (mode === 3) return;
-                playDrum();
-                // Double-beat offset scales with speed.
-                setTimeout(() => {
-                    if (mode !== 3) playDrum();
-                }, tempo / 4);
-            }, tempo);
-        }
-
-        // --- Game Objects ---
         class Fragment {
             constructor(x, y) {
                 this.x = x; this.y = y;
-                const target = totemPoints[Math.floor(Math.random()*totemPoints.length)];
+                const target = totemPoints[Math.floor(Math.random() * totemPoints.length)];
                 this.tx = target.x; this.ty = target.y;
-                this.vx = (Math.random()-0.5)*40; this.vy = (Math.random()-0.5)*40;
-                this.isHome = false;
+                this.vx = (Math.random() - 0.5) * 20;
+                this.vy = (Math.random() - 0.5) * 20;
             }
             update() {
-                if(!this.isHome) {
-                    this.x += this.vx; this.y += this.vy; this.vx *= 0.88; this.vy *= 0.88;
-                    if(Math.abs(this.vx) < 0.5) {
-                        this.x += (this.tx - this.x)*0.12; this.y += (this.ty - this.y)*0.12;
-                    }
-                    if(Math.abs(this.x-this.tx) < 2) this.isHome = true;
-                }
+                this.x += (this.tx - this.x) * 0.05;
+                this.y += (this.ty - this.y) * 0.05;
             }
             draw() {
-                ctx.fillStyle = this.isHome ? "rgba(45,212,191,0.3)" : "#2dd4bf";
+                ctx.fillStyle = "#2dd4bf";
                 ctx.fillRect(this.x, this.y, 2, 2);
             }
         }
 
-        class Glitch {
-            constructor() { this.spawn(); }
-            spawn() {
-                if(mode === 2) { // Saccadic
-                    this.x = Math.random()*(canvas.width-100)+50;
-                    this.y = Math.random()*(canvas.height-100)+50;
-                    lastJump = Date.now();
-                } else {
-                    const a = Math.random()*Math.PI*2;
-                    this.x = canvas.width/2 + Math.cos(a)*canvas.width;
-                    this.y = canvas.height/2 + Math.sin(a)*canvas.width;
-                }
-            }
-            update() {
-                if(mode === 1) { // EMDR
-                    emdrAngle += speedMult;
-                    this.x = canvas.width/2 + Math.sin(emdrAngle)*(canvas.width*0.4);
-                    this.y = canvas.height/2;
-                    if (panner && audioCtx) {
-                        const panValue = (this.x / canvas.width) * 2 - 1;
-                        panner.pan.setTargetAtTime(panValue, audioCtx.currentTime, 0.1);
-                    }
-                } else if(mode === 2) { // Saccadic
-                    if(Date.now()-lastJump > 700) this.spawn();
-                } else {
-                    const dx = canvas.width/2 - this.x, dy = canvas.height/2 - this.y;
-                    const d = Math.sqrt(dx*dx+dy*dy);
-                    this.x += (dx/d)*3; this.y += (dy/d)*3;
-                }
-            }
-            draw() {
-                ctx.strokeStyle = "#f43f5e"; ctx.lineWidth = 2;
-                ctx.strokeRect(this.x-10, this.y-10, 20, 20);
-            }
-        }
-
-        // --- Core Loop ---
         function animate() {
-            ctx.fillStyle = mode === 3 ? "#020617" : "#0f172a";
-            ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = "rgba(2, 6, 23, 0.2)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if(Math.random() < 0.05) tomahawks.push(new Tomahawk());
 
-            if(!isPaused) {
-                // Background Stars
-                stars.forEach(s => {
-                    let speed = mode === 2 ? 4 : (mode === 3 ? 0.4 : 1.2);
-                    s.z -= speed; if(s.z<=0) s.z=canvas.width;
-                    const sx = (s.x*(canvas.width/s.z))+canvas.width/2;
-                    const sy = (s.y*(canvas.width/s.z))+canvas.height/2;
-                    ctx.fillStyle = mode === 2 ? `rgba(244,63,94,${1-s.z/canvas.width})` : `rgba(45,212,191,${1-s.z/canvas.width})`;
-                    ctx.beginPath(); ctx.arc(sx, sy, s.s*(canvas.width/s.z), 0, Math.PI*2); ctx.fill();
-                });
+            tomahawks.forEach((t, i) => {
+                t.update(); t.draw();
+                if(t.y > canvas.height) tomahawks.splice(i, 1);
+            });
 
-                // Totem Draw
-                ctx.strokeStyle = "rgba(45,212,191,0.1)";
-                ctx.beginPath();
-                totemPoints.forEach((p, i) => { if(i===0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-                ctx.closePath(); ctx.stroke();
-
-                fragments.forEach(f => { f.update(); f.draw(); });
-                if(mode !== 3) {
-                    if(glitches.length < 1) glitches.push(new Glitch());
-                    glitches.forEach(g => { g.update(); g.draw(); });
-                }
-            }
+            fragments.forEach(f => { f.update(); f.draw(); });
             requestAnimationFrame(animate);
         }
 
-        // --- Controls & Lifecycle ---
-        function startApp() {
-            initAudio();
-            startSpiritLandscape();
-            startDrum();
-            document.getElementById('intro-overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('intro-overlay').style.display = 'none';
-                document.getElementById('hud').style.opacity = '0.5';
-                document.getElementById('controls').style.opacity = '1';
-                isPaused = false;
-            }, 600);
-            setInterval(() => { if(!isPaused && timeLeft>0) timeLeft--; updateHUD(); }, 1000);
-        }
-
-        function updateHUD() {
-            const m = Math.floor(timeLeft/60), s = timeLeft%60;
-            document.getElementById('timer-display').innerText = `${m}:${s.toString().padStart(2,'0')}`;
-        }
-
-        function cycleMode() {
-            mode = (mode + 1) % 4;
-            const btn = document.getElementById('mode-btn');
-            const labels = ["Mode: STANDARD", "Mode: EMDR (Calm)", "Mode: SACCADIC (Focus)", "Mode: ZEN"];
-            btn.innerText = labels[mode];
-            btn.style.color = mode === 2 ? "#f43f5e" : (mode === 3 ? "#a855f7" : "#2dd4bf");
-            glitches = [];
-        }
-
-        function handleInput(e) {
-            if(isPaused || mode === 3) return;
-            const x = e.clientX || e.touches[0].clientX;
-            const y = e.clientY || e.touches[0].clientY;
-            glitches.forEach((g, i) => {
-                if(Math.sqrt((x-g.x)**2 + (y-g.y)**2) < 50) {
-                    if("vibrate" in navigator) navigator.vibrate([40, 20]);
-                    glitches.splice(i, 1); stats.total++;
-                    for(let j=0; j<25; j++) fragments.push(new Fragment(g.x, g.y));
-                    if(stats.total%20===0) stats.level++;
-                    localStorage.setItem('shatterpoint_stats', JSON.stringify(stats));
-                    document.getElementById('active-level').innerText = `Rank ${stats.level}`;
+        window.addEventListener('mousedown', (e) => {
+            tomahawks.forEach((t, i) => {
+                if(Math.hypot(t.x - e.clientX, t.y - e.clientY) < 50) {
+                    for(let j=0; j<30; j++) fragments.push(new Fragment(t.x, t.y));
+                    tomahawks.splice(i, 1);
                 }
             });
-        }
+        });
 
-        window.addEventListener('mousedown', handleInput);
-        window.addEventListener('touchstart', (e) => { handleInput(e); e.preventDefault(); }, {passive: false});
-        window.addEventListener('beforeunload', stopSpiritLandscape);
+        generateOspreyTotem();
         animate();
     </script>
 </body>
